@@ -2,6 +2,7 @@ package shared
 
 import (
 	"context"
+	"io"
 
 	"github.com/djmarrerajr/common-lib/observability/metrics"
 	"github.com/djmarrerajr/common-lib/services/db"
@@ -18,4 +19,6 @@ type ApplicationContext struct {
 	Validator *validator.Validate // struct validator
 	Server    Servable            // embedded HTTP/HTTPS server
 	Database  db.Adapter          // embedded Database adapter
+
+	Closer io.Closer
 }

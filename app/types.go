@@ -87,6 +87,13 @@ func (a *application) Shutdown(cancel context.CancelFunc) {
 		}
 	}
 
+	if a.AppContext.Closer != nil {
+		err := a.AppContext.Closer.Close()
+		if err != nil {
+			a.AppContext.Logger.WithCtx(a.AppContext.RootCtx).Fatalf("unable to close tracer: %v", err)
+		}
+	}
+
 	cancel()
 }
 

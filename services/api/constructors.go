@@ -8,6 +8,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/djmarrerajr/common-lib/errs"
+	"github.com/djmarrerajr/common-lib/observability/traces"
 	"github.com/djmarrerajr/common-lib/shared"
 	"github.com/djmarrerajr/common-lib/utils"
 )
@@ -101,6 +102,7 @@ func NewServerFromEnv(env utils.Environ, appCtx shared.ApplicationContext, optio
 
 	newopt = append(newopt,
 		WithTimeoutDurationSecs(readTimeout, readHeaderTimeout, writeTimeout, idleTimeout),
+		WithRequestMiddleware(traces.RequestTracing(appCtx, "/health", "/metrics")),
 		WithRequestMiddleware(MetricsMiddleware(appCtx)),
 		WithRouteHandler("/health", defaultHealthCheckHandler),
 		WithRouteHandler("/metrics", http.HandlerFunc(promhttp.Handler().ServeHTTP)),

@@ -6,8 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/djmarrerajr/common-lib/shared"
 	"github.com/gorilla/mux"
+
+	"github.com/djmarrerajr/common-lib/shared"
 )
 
 // MetricsMiddleware will integrate with the metrics collector service to create

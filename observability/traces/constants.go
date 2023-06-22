@@ -14,3 +14,8 @@ const (
 	TracingSamplerTypeEnvKey  = "TRACING_SAMPLER_TYPE"
 	TracingSamplerValueEnvKey = "TRACING_SAMPLER_VALUE"
 )
+
+// nolint: unused
+const (
+	HeaderRequestId = "X-Request-Id"
+)

@@ -6,6 +6,7 @@ import (
 
 	"github.com/djmarrerajr/common-lib/errs"
 	"github.com/djmarrerajr/common-lib/observability/metrics"
+	"github.com/djmarrerajr/common-lib/observability/traces"
 	"github.com/djmarrerajr/common-lib/services/api"
 	"github.com/djmarrerajr/common-lib/shared"
 	"github.com/djmarrerajr/common-lib/utils"
@@ -33,6 +34,11 @@ func NewWithApiFromEnv(env utils.Environ, opts ...Option) (*application, error) 
 	app.AppContext.Collector, err = metrics.NewCollectorFromEnv(env, app.name)
 	if err != nil {
 		return nil, errs.Wrap(err, errs.ErrTypeConfiguration, "while instantiating metrics collector")
+	}
+
+	app.AppContext.Tracer, app.AppContext.Closer, err = traces.NewTracerFromEnv(env, *app.AppContext, app.name, app.version)
+	if err != nil {
+		return nil, errs.Wrap(err, errs.ErrTypeConfiguration, "while instantiating tracer")
 	}
 
 	app.AppContext.Server, err = api.NewServerFromEnv(env, *app.AppContext)

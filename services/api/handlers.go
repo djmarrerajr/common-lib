@@ -7,11 +7,12 @@ import (
 	"io"
 	"net/http"
 	"reflect"
+	"runtime"
 
 	"github.com/djmarrerajr/common-lib/errs"
+	"github.com/djmarrerajr/common-lib/observability/traces"
 	"github.com/djmarrerajr/common-lib/shared"
 	"github.com/djmarrerajr/common-lib/utils"
-	"github.com/google/uuid"
 )
 
 // this needs to be thought out and refactored...
@@ -129,15 +130,19 @@ func (h ContextualHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var buff []byte
 	var err error
 
-	reqID := r.Header.Get(HeaderRequestId)
-	if reqID == "" {
-		reqID = uuid.NewString()
-	}
+	// reqID := r.Header.Get(HeaderRequestId)
+	// if reqID == "" {
+	// 	reqID = uuid.NewString()
+	// }
 
-	reqCtx := utils.AddMapToContext(h.RootCtx, utils.FieldMap{
-		"requestID":  reqID,
+	reqCtx := utils.AddMapToContext(r.Context(), utils.GetFieldMapFromContext(h.RootCtx))
+	reqCtx = utils.AddMapToContext(reqCtx, utils.FieldMap{
+		// "requestID":  reqID,
 		"requestURL": r.URL.Path,
 	})
+
+	span, childCtx := traces.StartChildSpan(reqCtx, runtime.FuncForPC(reflect.ValueOf(h.CustomHandlerFunc).Pointer()).Name())
+	defer traces.FinishChildSpan(span)
 
 	ctype := r.Header.Get("Content-Type")
 
@@ -157,7 +162,7 @@ func (h ContextualHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	resp = h.CustomHandlerFunc(reqCtx, h.ApplicationContext, data)
+	resp = h.CustomHandlerFunc(childCtx, h.ApplicationContext, data)
 
 	buff, err = h.marshalRequest(ctype, resp)
 	if err != nil {
