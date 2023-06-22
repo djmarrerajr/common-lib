@@ -97,11 +97,14 @@ func NewAdapterFromEnv(env utils.Environ, appCtx shared.ApplicationContext, opti
 		WithCertificateInfo(cacert, cert, key),
 	)
 
-	return NewCockroachDB(dbname, newopt...), nil
+	db := newCockroachDB(appCtx, dbname, newopt...)
+
+	return db, nil
 }
 
-func NewCockroachDB(database string, options ...Option) *CockroachDB {
+func newCockroachDB(appCtx shared.ApplicationContext, database string, options ...Option) *CockroachDB {
 	db := CockroachDB{
+		AppCtx:   appCtx,
 		database: database,
 	}
 

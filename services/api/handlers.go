@@ -11,6 +11,8 @@ import (
 
 	"github.com/djmarrerajr/common-lib/errs"
 	"github.com/djmarrerajr/common-lib/shared"
+	"github.com/djmarrerajr/common-lib/utils"
+	"github.com/google/uuid"
 )
 
 // this needs to be thought out and refactored...
@@ -119,9 +121,6 @@ func (h ContextualHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var err error
 
 	ctype := r.Header.Get("Content-Type")
-	// if ctype == "" {
-	// 	ctype = ValueApplicationJson
-	// }
 
 	w.Header().Add("Content-Type", ctype)
 
@@ -139,7 +138,17 @@ func (h ContextualHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	resp = h.CustomHandlerFunc(h.RootCtx, h.ApplicationContext, data)
+	reqID := r.Header.Get(HeaderRequestId)
+	if reqID == "" {
+		reqID = uuid.NewString()
+	}
+
+	reqCtx := utils.AddMapToContext(h.RootCtx, utils.FieldMap{
+		"requestID":  reqID,
+		"requestURL": r.URL.Path,
+	})
+
+	resp = h.CustomHandlerFunc(reqCtx, h.ApplicationContext, data)
 
 	buff, err = h.marshalRequest(ctype, resp)
 	if err != nil {

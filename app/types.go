@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -32,24 +31,23 @@ func (a *application) Run() (err error) {
 
 	signal.Notify(sigChan)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	// defer cancel()
+	ctx, cancel := context.WithCancel(a.AppContext.RootCtx)
 
 	grp, gCtx := errgroup.WithContext(ctx)
 	if a.AppContext.Database != nil {
 		err = a.AppContext.Database.Start(gCtx, grp)
 		if err != nil {
-			a.AppContext.Logger.Fatalf("unable to start application: %v", err)
+			a.AppContext.Logger.WithCtx(ctx).Fatalf("unable to start application: %v", err)
 		}
 	}
 	if a.AppContext.Server != nil {
 		err = a.AppContext.Server.Start(gCtx, grp)
 		if err != nil {
-			a.AppContext.Logger.Fatalf("unable to start application: %v", err)
+			a.AppContext.Logger.WithCtx(ctx).Fatalf("unable to start application: %v", err)
 		}
 	}
 
-	a.AppContext.Logger.Infof("application startup complete")
+	a.AppContext.Logger.WithCtx(ctx).Infof("application startup complete")
 	run := true
 	for run {
 		sig := <-sigChan
@@ -69,7 +67,6 @@ func (a *application) Run() (err error) {
 
 	a.Shutdown(cancel)
 
-	a.AppContext.Logger.Infof("waiting for services to terminate...")
 	<-gCtx.Done()
 
 	return grp.Wait()
@@ -79,14 +76,14 @@ func (a *application) Shutdown(cancel context.CancelFunc) {
 	if a.AppContext.Server != nil {
 		err := a.AppContext.Server.Stop()
 		if err != nil {
-			log.Fatalf("unable to shutdown server: %v", err)
+			a.AppContext.Logger.WithCtx(a.AppContext.RootCtx).Fatalf("unable to shutdown server: %v", err)
 		}
 	}
 
 	if a.AppContext.Database != nil {
 		err := a.AppContext.Database.Stop()
 		if err != nil {
-			log.Fatalf("unable to shutdown database: %v", err)
+			a.AppContext.Logger.WithCtx(a.AppContext.RootCtx).Fatalf("unable to shutdown database: %v", err)
 		}
 	}
 
