@@ -9,7 +9,7 @@ import (
 type metricsResponseWriter struct {
 	writer    http.ResponseWriter
 	code      int
-	ErrorType errs.ErrorType
+	errorType errs.ErrorType
 }
 
 func (m *metricsResponseWriter) Header() http.Header {

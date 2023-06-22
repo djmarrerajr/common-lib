@@ -32,8 +32,8 @@ func MetricsMiddleware(appCtx shared.ApplicationContext) mux.MiddlewareFunc {
 
 			h.ServeHTTP(mw, r)
 
-			if mw.ErrorType != "" {
-				responseErrorsByPath.WithLabelValues(path, string(mw.ErrorType)).Inc()
+			if mw.errorType != "" {
+				responseErrorsByPath.WithLabelValues(path, string(mw.errorType)).Inc()
 			}
 
 			responseStatusByPath.WithLabelValues(path, fmt.Sprint(mw.code)).Inc()

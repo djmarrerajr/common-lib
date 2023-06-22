@@ -16,6 +16,7 @@ import (
 
 // this needs to be thought out and refactored...
 type ErrorResponse struct {
+	RequestId   string         `json:"requestId" xml:"requestId"`
 	Type        errs.ErrorType `json:"type"  xml:"type"`
 	Code        int            `json:"code"  xml:"code"`
 	Description string         `json:"error" xml:"error"`
@@ -98,10 +99,13 @@ func (h ContextualHandler) returnErrorResponse(w http.ResponseWriter, reqCtx con
 
 	h.Logger.WithCtx(reqCtx).Error("error processing request", err)
 
-	w.(*metricsResponseWriter).ErrorType = errs.GetType(err)
+	reqID, _ := utils.GetFieldValueFromContext[string](reqCtx, "requestID")
+
+	w.(*metricsResponseWriter).errorType = errs.GetType(err)
 
 	resp := ErrorResponse{
-		Type:        w.(*metricsResponseWriter).ErrorType,
+		RequestId:   reqID,
+		Type:        w.(*metricsResponseWriter).errorType,
 		Code:        http.StatusBadRequest,
 		Description: err.Error(),
 	}
