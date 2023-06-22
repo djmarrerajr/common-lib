@@ -1,5 +1,15 @@
 package api
 
+import (
+	"fmt"
+	"net/http"
+	"strings"
+	"time"
+
+	"github.com/djmarrerajr/common-lib/shared"
+	"github.com/gorilla/mux"
+)
+
 // AddRequestInfoToContext will extract key bits of information from the
 // request (i.e. a unique request-id, etc.) and add them to the context
 // so that they can be logged
@@ -26,24 +36,26 @@ package api
 // MetricsMiddleware will integrate with the metrics collector service to create
 // and increment a standard set of obversability metrics for each, registered,
 // apo endpoint
-// func MetricsMiddleware(collector metrics.Collector) mux.MiddlewareFunc {
-// 	requestByPath := collector.NewDimensionedCounter("requests_total", "path")
-// 	responseStatusByPath := collector.NewDimensionedCounter("response_status", "path", "statusCode")
-// 	responseTimeByPath := collector.NewDimensionedGauge("response_time", "path")
+func MetricsMiddleware(appCtx shared.ApplicationContext) mux.MiddlewareFunc {
+	collector := appCtx.Collector
 
-// 	return func(h http.Handler) http.Handler {
-// 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-// 			path := strings.ReplaceAll(r.URL.Path[1:], "/", "_")
+	requestByPath := collector.NewDimensionedCounter("requests_total", "path")
+	responseStatusByPath := collector.NewDimensionedCounter("response_status", "path", "statusCode")
+	responseTimeByPath := collector.NewDimensionedGauge("response_time", "path")
 
-// 			mw := &metricsResponseWriter{writer: w}
-// 			st := time.Now()
+	return func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			path := strings.ReplaceAll(r.URL.Path[1:], "/", "_")
 
-// 			requestByPath.WithLabelValues(path).Inc()
+			mw := &metricsResponseWriter{writer: w}
+			st := time.Now()
 
-// 			h.ServeHTTP(mw, r)
+			requestByPath.WithLabelValues(path).Inc()
 
-// 			responseStatusByPath.WithLabelValues(path, fmt.Sprint(mw.code)).Inc()
-// 			responseTimeByPath.WithLabelValues(path).Set(float64(time.Since(st).Milliseconds()))
-// 		})
-// 	}
-// }
+			h.ServeHTTP(mw, r)
+
+			responseStatusByPath.WithLabelValues(path, fmt.Sprint(mw.code)).Inc()
+			responseTimeByPath.WithLabelValues(path).Set(float64(time.Since(st).Milliseconds()))
+		})
+	}
+}

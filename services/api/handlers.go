@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 	"reflect"
-	"time"
 
 	"github.com/djmarrerajr/common-lib/errs"
 	"github.com/djmarrerajr/common-lib/shared"
@@ -167,6 +166,5 @@ func (h ContextualHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 //	... this should be replaced as it will cause the application to
 //		always 'appear' healthy but is provided as a default
 func defaultHealthCheckHandler(w http.ResponseWriter, r *http.Request) {
-	time.Sleep(3 * time.Second)
 	w.WriteHeader(http.StatusOK)
 }

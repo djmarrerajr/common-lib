@@ -8,6 +8,7 @@ import (
 var _ Collector = new(PrometheusCollector)
 
 type PrometheusCollector struct {
+	appName  string
 	counters map[string]any
 }
 
@@ -15,7 +16,8 @@ func (p *PrometheusCollector) NewCounter(name string) Counter {
 	if _, exists := p.counters[name]; !exists {
 		p.counters[name] = Counter{
 			promauto.NewCounter(prometheus.CounterOpts{
-				Name: name,
+				Namespace: p.appName,
+				Name:      name,
 			}),
 		}
 	}
@@ -27,7 +29,8 @@ func (p *PrometheusCollector) NewDimensionedCounter(name string, labels ...strin
 	if _, exists := p.counters[name]; !exists {
 		p.counters[name] = DimensionedCounter{
 			promauto.NewCounterVec(prometheus.CounterOpts{
-				Name: name,
+				Namespace: p.appName,
+				Name:      name,
 			}, labels),
 		}
 	}
@@ -40,7 +43,8 @@ func (p *PrometheusCollector) NewGauge(name string) Gauge {
 	if _, exists := p.counters[name]; !exists {
 		p.counters[name] = Gauge{
 			promauto.NewGauge(prometheus.GaugeOpts{
-				Name: name,
+				Namespace: p.appName,
+				Name:      name,
 			}),
 		}
 	}
@@ -52,7 +56,8 @@ func (p *PrometheusCollector) NewDimensionedGauge(name string, labels ...string)
 	if _, exists := p.counters[name]; !exists {
 		p.counters[name] = DimensionedGauge{
 			promauto.NewGaugeVec(prometheus.GaugeOpts{
-				Name: name,
+				Namespace: p.appName,
+				Name:      name,
 			}, labels),
 		}
 	}

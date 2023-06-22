@@ -11,11 +11,11 @@ func WithMetricsCollector(Collector metrics.Collector) Option {
 	}
 }
 
-func WithMetricsCollectorFromEnv(env utils.Environ, options ...metrics.Option) Option {
+func WithMetricsCollectorFromEnv(env utils.Environ, appName string, options ...metrics.Option) Option {
 	return func(a *application) {
-		e, err := metrics.NewCollectorFromEnv(env, a.AppContext.Logger, options...)
+		e, err := metrics.NewCollectorFromEnv(env, appName, options...)
 		if err != nil {
-			a.AppContext.Logger.Fatalf("unable to create metrics Collector:  %v", err)
+			a.AppContext.Logger.WithCtx(a.AppContext.RootCtx).Fatalf("unable to create metrics Collector:  %v", err)
 		}
 
 		a.AppContext.Collector = e

@@ -101,6 +101,7 @@ func NewServerFromEnv(env utils.Environ, appCtx shared.ApplicationContext, optio
 
 	newopt = append(newopt,
 		WithTimeoutDurationSecs(readTimeout, readHeaderTimeout, writeTimeout, idleTimeout),
+		WithRequestMiddleware(MetricsMiddleware(appCtx)),
 		WithRouteHandler("/health", defaultHealthCheckHandler),
 		WithRouteHandler("/metrics", http.HandlerFunc(promhttp.Handler().ServeHTTP)),
 	)

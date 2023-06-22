@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/djmarrerajr/common-lib/errs"
+	"github.com/djmarrerajr/common-lib/observability/metrics"
 	"github.com/djmarrerajr/common-lib/services/api"
 	"github.com/djmarrerajr/common-lib/shared"
 	"github.com/djmarrerajr/common-lib/utils"
@@ -27,6 +28,11 @@ func NewWithApiFromEnv(env utils.Environ, opts ...Option) (*application, error) 
 	app, err := createInitialApplication(env)
 	if err != nil {
 		return nil, err
+	}
+
+	app.AppContext.Collector, err = metrics.NewCollectorFromEnv(env, app.name)
+	if err != nil {
+		return nil, errs.Wrap(err, errs.ErrTypeConfiguration, "while instantiating metrics collector")
 	}
 
 	app.AppContext.Server, err = api.NewServerFromEnv(env, *app.AppContext)
