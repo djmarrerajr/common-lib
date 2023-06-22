@@ -41,6 +41,7 @@ func MetricsMiddleware(appCtx shared.ApplicationContext) mux.MiddlewareFunc {
 
 	requestByPath := collector.NewDimensionedCounter("requests_total", "path")
 	responseStatusByPath := collector.NewDimensionedCounter("response_status", "path", "statusCode")
+	responseErrorsByPath := collector.NewDimensionedCounter("response_errors", "path", "errorType")
 	responseTimeByPath := collector.NewDimensionedGauge("response_time", "path")
 
 	return func(h http.Handler) http.Handler {
@@ -53,6 +54,10 @@ func MetricsMiddleware(appCtx shared.ApplicationContext) mux.MiddlewareFunc {
 			requestByPath.WithLabelValues(path).Inc()
 
 			h.ServeHTTP(mw, r)
+
+			if mw.ErrorType != "" {
+				responseErrorsByPath.WithLabelValues(path, string(mw.ErrorType)).Inc()
+			}
 
 			responseStatusByPath.WithLabelValues(path, fmt.Sprint(mw.code)).Inc()
 			responseTimeByPath.WithLabelValues(path).Set(float64(time.Since(st).Milliseconds()))

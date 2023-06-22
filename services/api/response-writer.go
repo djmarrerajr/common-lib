@@ -2,11 +2,14 @@ package api
 
 import (
 	"net/http"
+
+	"github.com/djmarrerajr/common-lib/errs"
 )
 
 type metricsResponseWriter struct {
-	writer http.ResponseWriter
-	code   int
+	writer    http.ResponseWriter
+	code      int
+	ErrorType errs.ErrorType
 }
 
 func (m *metricsResponseWriter) Header() http.Header {
