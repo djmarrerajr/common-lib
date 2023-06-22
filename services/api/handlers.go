@@ -16,8 +16,9 @@ import (
 
 // this needs to be thought out and refactored...
 type ErrorResponse struct {
-	Code        int    `json:"code"  xml:"code"`
-	Description string `json:"error" xml:"error"`
+	Type        errs.ErrorType `json:"type"  xml:"type"`
+	Code        int            `json:"code"  xml:"code"`
+	Description string         `json:"error" xml:"error"`
 }
 
 // ContextualHandler wraps the underlying 'business logic' handler function
@@ -92,12 +93,15 @@ func (h ContextualHandler) marshalRequest(ctype string, body any) ([]byte, error
 	return nil, nil
 }
 
-func (h ContextualHandler) returnErrorResponse(w http.ResponseWriter, ctype string, err error) {
+func (h ContextualHandler) returnErrorResponse(w http.ResponseWriter, reqCtx context.Context, ctype string, err error) {
 	var buff []byte
 
-	h.Logger.WithCtx(h.RootCtx).Error("error processing request", err)
+	h.Logger.WithCtx(reqCtx).Error("error processing request", err)
+
+	w.(*metricsResponseWriter).ErrorType = errs.GetType(err)
 
 	resp := ErrorResponse{
+		Type:        w.(*metricsResponseWriter).ErrorType,
 		Code:        http.StatusBadRequest,
 		Description: err.Error(),
 	}
@@ -110,32 +114,16 @@ func (h ContextualHandler) returnErrorResponse(w http.ResponseWriter, ctype stri
 
 	w.WriteHeader(http.StatusOK)
 
-	// nolint: errcheck
-	w.Write(buff)
+	_, err = w.Write(buff)
+	if err != nil {
+		h.Logger.WithCtx(reqCtx).Error("error writing response", err)
+	}
 }
 
 func (h ContextualHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var resp any
 	var buff []byte
 	var err error
-
-	ctype := r.Header.Get("Content-Type")
-
-	w.Header().Add("Content-Type", ctype)
-
-	data, err := h.unmarshalRequest(ctype, r.Body)
-	if err != nil {
-		h.returnErrorResponse(w, ctype, errs.WithType(err, errs.ErrTypeUnmarshal))
-		return
-	}
-
-	if data != nil {
-		err = h.ApplicationContext.Validator.Struct(data)
-		if err != nil {
-			h.returnErrorResponse(w, ctype, errs.WithType(err, errs.ErrTypeValidation))
-			return
-		}
-	}
 
 	reqID := r.Header.Get(HeaderRequestId)
 	if reqID == "" {
@@ -147,18 +135,38 @@ func (h ContextualHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		"requestURL": r.URL.Path,
 	})
 
+	ctype := r.Header.Get("Content-Type")
+
+	w.Header().Add("Content-Type", ctype)
+
+	data, err := h.unmarshalRequest(ctype, r.Body)
+	if err != nil {
+		h.returnErrorResponse(w, reqCtx, ctype, errs.WithType(err, errs.ErrTypeUnmarshal))
+		return
+	}
+
+	if data != nil {
+		err = h.ApplicationContext.Validator.Struct(data)
+		if err != nil {
+			h.returnErrorResponse(w, reqCtx, ctype, errs.WithType(err, errs.ErrTypeValidation))
+			return
+		}
+	}
+
 	resp = h.CustomHandlerFunc(reqCtx, h.ApplicationContext, data)
 
 	buff, err = h.marshalRequest(ctype, resp)
 	if err != nil {
-		h.returnErrorResponse(w, ctype, errs.WithType(err, errs.ErrTypeMarshal))
+		h.returnErrorResponse(w, reqCtx, ctype, errs.WithType(err, errs.ErrTypeMarshal))
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
 
-	// nolint: errcheck
-	w.Write(buff)
+	_, err = w.Write(buff)
+	if err != nil {
+		h.Logger.WithCtx(reqCtx).Error("error writing response", err)
+	}
 }
 
 // defaultHealthCheckHandler will respond with a simple HTTP-200
