@@ -6,7 +6,7 @@ import (
 
 	"github.com/djmarrerajr/common-lib/errs"
 	"github.com/djmarrerajr/common-lib/observability/metrics"
-	"github.com/djmarrerajr/common-lib/observability/traces"
+	"github.com/djmarrerajr/common-lib/observability/tracing"
 	"github.com/djmarrerajr/common-lib/services/api"
 	"github.com/djmarrerajr/common-lib/shared"
 	"github.com/djmarrerajr/common-lib/utils"
@@ -36,7 +36,7 @@ func NewWithApiFromEnv(env utils.Environ, opts ...Option) (*application, error) 
 		return nil, errs.Wrap(err, errs.ErrTypeConfiguration, "while instantiating metrics collector")
 	}
 
-	app.AppContext.Tracer, app.AppContext.Closer, err = traces.NewTracerFromEnv(env, *app.AppContext, app.name, app.version)
+	app.AppContext.Tracer, app.AppContext.Closer, err = tracing.NewTracerFromEnv(env, *app.AppContext, app.name, app.version)
 	if err != nil {
 		return nil, errs.Wrap(err, errs.ErrTypeConfiguration, "while instantiating tracer")
 	}
@@ -57,6 +57,13 @@ func NewWithApiFromEnv(env utils.Environ, opts ...Option) (*application, error) 
 // struct that has been initialized with the basic elements we need in
 // order to extend its functionality
 func createInitialApplication(env utils.Environ) (application, error) {
+	appHost, _ := os.Hostname()
+
+	appEnv, OK := env.Get(AppEnvironEnvKey)
+	if !OK {
+		appEnv = shared.DefaultAppEnviron
+	}
+
 	appName, err := env.GetRequired(AppNameEnvKey)
 	if err != nil {
 		return application{}, errs.WithType(err, errs.ErrTypeConfiguration)
@@ -69,8 +76,10 @@ func createInitialApplication(env utils.Environ) (application, error) {
 
 	ctx := context.Background()
 	ctx = utils.AddMapToContext(ctx, utils.FieldMap{
-		"appName":    appName,
-		"appVersion": appVrsn,
+		shared.EnvironContextKey:    appEnv,
+		shared.HostnameContextKey:   appHost,
+		shared.AppNameContextKey:    appName,
+		shared.AppVersionContextKey: appVrsn,
 	})
 
 	commit, OK := env.Get(AppCommitEnvKey)

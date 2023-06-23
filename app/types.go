@@ -15,9 +15,9 @@ import (
 var _ Runnable = new(application)
 
 type application struct {
-	name    string // the name of the application        (used for obvservability)
-	version string // the version of the application     (used for obvservability)
-	commit  string // the commit id of the current build (used for obvservability)
+	name    string // the name of the application         (used for obvservability)
+	version string // the version of the application      (used for obvservability)
+	commit  string // the commit id of the current build  (used for obvservability)
 
 	env            utils.Environ               // map of environment values
 	signalHandlers map[os.Signal]signalHandler // map of signal handlers

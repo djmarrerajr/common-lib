@@ -1,4 +1,4 @@
-package traces
+package tracing
 
 // nolint: unused
 const (

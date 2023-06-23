@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/djmarrerajr/common-lib/shared"
+	"github.com/djmarrerajr/common-lib/utils"
 )
 
 // MetricsMiddleware will integrate with the metrics collector service to create
@@ -17,10 +18,13 @@ import (
 func MetricsMiddleware(appCtx shared.ApplicationContext) mux.MiddlewareFunc {
 	collector := appCtx.Collector
 
-	requestByPath := collector.NewDimensionedCounter("requests_total", "path")
-	responseStatusByPath := collector.NewDimensionedCounter("response_status", "path", "statusCode")
-	responseErrorsByPath := collector.NewDimensionedCounter("response_errors", "path", "errorType")
-	responseTimeByPath := collector.NewDimensionedGauge("response_time", "path")
+	filterLabels := []string{shared.EnvironContextKey, shared.HostnameContextKey, shared.AppNameContextKey, shared.AppVersionContextKey}
+
+	// define out standard set of api metrics...
+	requestByPath := collector.NewDimensionedCounter("requests_total", append(filterLabels, "path")...)
+	responseStatusByPath := collector.NewDimensionedCounter("response_status", append(filterLabels, "path", "statusCode")...)
+	responseErrorsByPath := collector.NewDimensionedCounter("response_errors", append(filterLabels, "path", "errorType")...)
+	responseTimeByPath := collector.NewDimensionedGauge("response_time", append(filterLabels, "path")...)
 
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -29,16 +33,23 @@ func MetricsMiddleware(appCtx shared.ApplicationContext) mux.MiddlewareFunc {
 			mw := &metricsResponseWriter{writer: w}
 			st := time.Now()
 
-			requestByPath.WithLabelValues(path).Inc()
-
 			h.ServeHTTP(mw, r)
 
-			if mw.errorType != "" {
-				responseErrorsByPath.WithLabelValues(path, string(mw.errorType)).Inc()
-			}
+			// grab values for our standard metric labels...
+			envn, _ := utils.GetFieldValueFromContext[string](appCtx.RootCtx, shared.EnvironContextKey)
+			host, _ := utils.GetFieldValueFromContext[string](appCtx.RootCtx, shared.HostnameContextKey)
+			appl, _ := utils.GetFieldValueFromContext[string](appCtx.RootCtx, shared.AppNameContextKey)
+			vrsn, _ := utils.GetFieldValueFromContext[string](appCtx.RootCtx, shared.AppVersionContextKey)
 
-			responseStatusByPath.WithLabelValues(path, fmt.Sprint(mw.code)).Inc()
-			responseTimeByPath.WithLabelValues(path).Set(float64(time.Since(st).Milliseconds()))
+			filterValues := []string{envn, host, appl, vrsn}
+
+			// now increment our standard metrics...
+			requestByPath.WithLabelValues(append(filterValues, path)...).Inc()
+			responseStatusByPath.WithLabelValues(append(filterValues, path, fmt.Sprint(mw.code))...).Inc()
+			responseTimeByPath.WithLabelValues(append(filterValues, path)...).Set(float64(time.Since(st).Milliseconds()))
+			if mw.errorType != "" {
+				responseErrorsByPath.WithLabelValues(append(filterValues, path, string(mw.errorType))...).Inc()
+			}
 		})
 	}
 }

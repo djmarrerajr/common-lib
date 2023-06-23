@@ -15,4 +15,4 @@ type Servable interface {
 	DefineRequestHandler(string, RequestHandlerFunc, any, ...string)
 }
 
-type RequestHandlerFunc func(context.Context, *ApplicationContext, any) any
+type RequestHandlerFunc func(context.Context, *ApplicationContext, any) (any, int)

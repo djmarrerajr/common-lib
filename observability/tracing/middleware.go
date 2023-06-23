@@ -1,4 +1,4 @@
-package traces
+package tracing
 
 import (
 	"net/http"
@@ -27,13 +27,12 @@ func RequestTracing(appCtx shared.ApplicationContext, routesToSuppress ...string
 				reqID = uuid.NewString()
 			}
 
-			r = r.WithContext(utils.AddFieldToContext(r.Context(), "requestId", reqID))
+			r = r.WithContext(utils.AddFieldToContext(r.Context(), shared.RequestIdContextKey, reqID))
 
 			if _, exists := routes[endpoint]; !exists {
 				var span opentracing.Span
 
 				tracer := opentracing.GlobalTracer()
-				// begin := time.Now()
 
 				// If the incoming request is carrying any opentracing context information
 				// extract it so it can be used...
@@ -52,7 +51,7 @@ func RequestTracing(appCtx shared.ApplicationContext, routesToSuppress ...string
 				ext.HTTPMethod.Set(span, r.Method)
 				ext.HTTPUrl.Set(span, endpoint)
 
-				span.SetTag("requestID", reqID)
+				span.SetTag(shared.RequestIdContextKey, reqID)
 
 				defer func() {
 					span.Finish()
