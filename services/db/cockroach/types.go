@@ -1,5 +1,6 @@
 package cockroach
 
+// TODO: refactor out to a non-library package
 import (
 	"context"
 	"fmt"

@@ -4,11 +4,12 @@ import (
 	"context"
 	"io"
 
+	"github.com/go-playground/validator"
+	"github.com/opentracing/opentracing-go"
+
 	"github.com/djmarrerajr/common-lib/observability/metrics"
 	"github.com/djmarrerajr/common-lib/services/db"
 	"github.com/djmarrerajr/common-lib/utils"
-	"github.com/go-playground/validator"
-	"github.com/opentracing/opentracing-go"
 )
 
 type ApplicationContext struct {

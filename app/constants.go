@@ -1,7 +1,6 @@
 package app
 
-const ()
-
+// nolint: unused
 const (
 	AppEnvironEnvKey = "ENV"
 	AppNameEnvKey    = "APPLICATION_NAME"

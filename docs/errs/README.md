@@ -1,4 +1,8 @@
-## `errs`
+## Proprietary Tenders - Gift Cards
+### prop-tend-gc-common-lib
+#### package: `errs`
+<br/>
+
 ### error creation, typing and comparison helpers
 ---
 <br>

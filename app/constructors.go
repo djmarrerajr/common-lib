@@ -4,13 +4,14 @@ import (
 	"context"
 	"os"
 
+	"github.com/go-playground/validator"
+
 	"github.com/djmarrerajr/common-lib/errs"
 	"github.com/djmarrerajr/common-lib/observability/metrics"
 	"github.com/djmarrerajr/common-lib/observability/tracing"
 	"github.com/djmarrerajr/common-lib/services/api"
 	"github.com/djmarrerajr/common-lib/shared"
 	"github.com/djmarrerajr/common-lib/utils"
-	"github.com/go-playground/validator"
 )
 
 // NewWithApiFromEnv will instantiate and return a standardized, albeit

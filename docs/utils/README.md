@@ -1,5 +1,8 @@
 ## Proprietary Tenders - Gift Cards
-### Common Library - `utils`
+### prop-tend-gc-common-lib
+#### package: `utils`
+<br/>
+
 ---
 <br>
 

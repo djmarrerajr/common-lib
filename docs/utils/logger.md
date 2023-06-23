@@ -1,4 +1,8 @@
-## `logger`
+## Proprietary Tenders - Gift Cards
+### prop-tend-gc-common-lib
+#### package: `logger`
+<br/>
+
 ### structured logger
 ---
 <br>

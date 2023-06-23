@@ -1,12 +1,14 @@
 package errs
 
 import (
-	stderr "errors"
 	"reflect"
 	"unicode"
 
-	pkgerr "github.com/pkg/errors"
 	"github.com/samber/lo"
+
+	stderr "errors"
+
+	pkgerr "github.com/pkg/errors"
 )
 
 var basicErrorPackages = []string{

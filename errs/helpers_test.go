@@ -2,15 +2,17 @@ package errs_test
 
 import (
 	"encoding/json"
-	stderr "errors"
 	"fmt"
 	"testing"
 
-	pkgerr "github.com/pkg/errors"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/djmarrerajr/common-lib/errs"
+
+	stderr "errors"
+
+	pkgerr "github.com/pkg/errors"
 )
 
 // Utility types used in the tests that follow...

@@ -1,5 +1,6 @@
 package db
 
+// TODO: refactor out to a non-library package
 import "github.com/google/uuid"
 
 type Account struct {
